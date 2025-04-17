@@ -16,7 +16,7 @@ namespace Rawy.Controllers
         private readonly IMapper mapper;
 
         private readonly IGenaricrepostry<Book> genaricrepostryBook;
-
+        //مةمةمةمة
         public AuthorController(IGenaricrepostry<Aurthor> genaricrepostry, IMapper mapper, IGenaricrepostry<Book> genaricrepostryBook)
         {
             this.genaricrepostry = genaricrepostry;
