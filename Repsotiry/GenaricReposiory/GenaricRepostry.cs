@@ -59,7 +59,7 @@ namespace Repsotiry.GenaricReposiory
         }
         public async Task<T> UpdateAsync(T entity)
         {
-            rawyDbcontext.Update(entity);
+             rawyDbcontext.Update(entity);
             await rawyDbcontext.SaveChangesAsync();
             return entity;
         }

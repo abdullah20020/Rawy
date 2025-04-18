@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using core.Models;
+using core.Prametars;
 using core.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Rawy.Dtos;
 using Repsotiry.spacification;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Rawy.Controllers
 {
@@ -16,7 +18,6 @@ namespace Rawy.Controllers
         private readonly IMapper mapper;
 
         private readonly IGenaricrepostry<Book> genaricrepostryBook;
-        //مةمةمةمة
         public AuthorController(IGenaricrepostry<Aurthor> genaricrepostry, IMapper mapper, IGenaricrepostry<Book> genaricrepostryBook)
         {
             this.genaricrepostry = genaricrepostry;
@@ -25,61 +26,67 @@ namespace Rawy.Controllers
         }
 
 
-        // GET: api/Author
+        //// GET: api/Author
         [HttpGet]
-        public async Task<ActionResult> GetAllAuthors()
+        public async Task<ActionResult<IReadOnlyList<AuthorDtos>>> GetAllAuthors([FromQuery] Bookspecpram bookspecpram)
         {
-            var Author = new AuthorSpecfication();
+            var Author = new AuthorSpecfication(bookspecpram);
             var authors = await genaricrepostry.getallwithspacAsync(Author);
-            var authorDtos = mapper.Map<IEnumerable<AuthorDtos>>(authors);
+            var authorDtos = mapper.Map<IReadOnlyList<Aurthor>, IReadOnlyList<AuthorDtos>>(authors);
             return Ok(authorDtos);
         }
 
-        // GET: api/Author/5
+        //// GET: api/Author/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<IReadOnlyList<AuthorDtos>>> GetAuthor(int id)
+        public async Task<ActionResult<AuthorDtos>> GetAuthor(int id)
         {
-            var author = await genaricrepostry.GetByIdAsync(id);
-            if (author == null) return NotFound();
+            var Author = new AuthorSpecfication(id);
+            var authors = await genaricrepostry.getbyidwithspacAsync(Author);
+            if (authors == null) return NotFound();
 
-            var authorDto = mapper.Map<AuthorDtos>(author);
-            return Ok(authorDto);
+            var authorDtos = mapper.Map<Aurthor, AuthorDtos>(authors);
+            return Ok(authorDtos);
         }
 
-        // POST: api/Author
+        //// POST: api/Author
         [HttpPost]
         public async Task<ActionResult> CreateAuthor([FromBody] AuthorDtos authorDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var author = mapper.Map<Aurthor>(authorDto);
+            var author = mapper.Map<AuthorDtos, Aurthor>(authorDto);
             await genaricrepostry.set(author);
             return CreatedAtAction(nameof(GetAuthor), new { id = author.Id }, author);
         }
 
-        // PUT: api/Author/5
+        //// PUT: api/Author/5
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateAuthor(int id, [FromBody] AuthorDtos authorDto)
         {
-            var existingAuthor = await genaricrepostry.GetByIdAsync(id);
-            if (existingAuthor == null) return NotFound();
+            var spec = new AuthorSpecfication(id);
+            var existingAuthor = await genaricrepostry.getbyidwithspacAsync(spec);
 
+            if (existingAuthor == null)
+                return NotFound();
+
+            // تحديث خصائص الكيان القائم بناءً على الـ DTO القادم
             mapper.Map(authorDto, existingAuthor);
+
             await genaricrepostry.UpdateAsync(existingAuthor);
+
             return NoContent();
         }
+        //// DELETE: api/Author/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteAuthor(int id)
+        //{
+        //    var author = await genaricrepostry.GetByIdAsync(id);
+        //    if (author == null) return NotFound();
 
-        // DELETE: api/Author/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAuthor(int id)
-        {
-            var author = await genaricrepostry.GetByIdAsync(id);
-            if (author == null) return NotFound();
-
-            await genaricrepostry.DeleteAsync(author);
-            return NoContent();
-        }
+        //    await genaricrepostry.DeleteAsync(author);
+        //    return NoContent();
+        //}
     }
 }
 

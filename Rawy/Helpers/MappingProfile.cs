@@ -56,7 +56,7 @@ namespace Rawy.Helpers
             //________________________________________________________/Aurthor
             CreateMap<Aurthor, AuthorDtos>()
                      .ForMember(b => b.Name, db => db.MapFrom(a => a.Name))
-                     .ForMember(b => b.id, db => db.MapFrom(a => a.Id))
+                    
                      .ForMember(b => b.Descriotion, db => db.MapFrom(a => a.Descriotion))
                      .ForMember(b => b.ProfilePicture, db => db.MapFrom(a => a.ProfilePicture)).ReverseMap();
             ;
