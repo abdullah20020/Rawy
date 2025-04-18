@@ -82,6 +82,8 @@ namespace Rawy.Helpers
         .ForMember(dest => dest.records, opt => opt.MapFrom(src =>
         src.RecordIds.Select(id => new Record { Id = id }).ToList())).ReverseMap();
 
+
+
         }
     }
 }

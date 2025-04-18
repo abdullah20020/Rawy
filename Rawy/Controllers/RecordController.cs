@@ -24,28 +24,41 @@ namespace Rawy.Controllers
 
         }
         [HttpPost]
-        [Authorize]
+
         public async Task<ActionResult<RecordDtos>> AddRecord([FromBody] RecordDtos dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User is not authenticated.");
-            }
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //    return Unauthorized("User is not authenticated.");
+            //}
 
             var record = mapper.Map<RecordDtos, Record>(dto);
-            record.BaseUserId = userId;
+            //record.BaseUserId = userId;
 
             var result = await genaricrepostry.set(record);
 
             var mapped = mapper.Map<Record, RecordDtos>(result);
 
             return Ok(mapped);
+        }
+
+ 
+        [HttpPut("make-recording-true/{id}")]
+        public async Task<ActionResult> MakeRecordingTrue(int id)
+        {
+            var record = await genaricrepostry.GetByIdAsync(id);
+            if (record == null) return NotFound("Record not found.");
+
+            record.Okay_Record = true;
+
+            await genaricrepostry.UpdateAsync(record);
+            return Ok("Recording status set to true.");
         }
     }
 }

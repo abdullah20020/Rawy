@@ -8,11 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Repsotiry.spacification
-{
+{ 
     public class MyFavoriteSpacification:BaseSpacfication<Favorite>
     {
        public MyFavoriteSpacification()
-        {
+        { 
             AddIncludes();
         }
 
