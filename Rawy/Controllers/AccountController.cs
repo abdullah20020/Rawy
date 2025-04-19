@@ -116,7 +116,7 @@ namespace Rawy.Controllers
         }
 
 
-   
+
         [HttpPost("add-user")]
         public async Task<ActionResult<UserDto>> AddUserByAdmin(RegisterDto model)
         {

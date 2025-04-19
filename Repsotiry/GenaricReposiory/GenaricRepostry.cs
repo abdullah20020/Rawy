@@ -20,7 +20,6 @@ namespace Repsotiry.GenaricReposiory
         {
             this.rawyDbcontext = rawyDbcontext;
         }
-
         public async Task<IReadOnlyList<T>> getallwithspacAsync(Ispacfiaction<T> spac)
         {
             return await Applicationsystem(spac).ToListAsync();
