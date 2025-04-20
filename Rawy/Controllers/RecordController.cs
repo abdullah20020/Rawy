@@ -31,15 +31,16 @@ namespace Rawy.Controllers
                 return BadRequest(ModelState);
 
 
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            //if (string.IsNullOrEmpty(userId))
-            //{
-            //    return Unauthorized("User is not authenticated.");
-            //}
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User is not authenticated.");
+            }
 
             var record = mapper.Map<RecordDtos, Record>(dto);
-            //record.BaseUserId = userId;
+
+            record.BaseUserId = userId;
 
             var result = await genaricrepostry.set(record);
 
@@ -60,5 +61,7 @@ namespace Rawy.Controllers
             await genaricrepostry.UpdateAsync(record);
             return Ok("Recording status set to true.");
         }
+
+
     }
 }
