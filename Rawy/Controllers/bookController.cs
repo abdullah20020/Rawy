@@ -4,9 +4,12 @@ using core.Prametars;
 using core.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Rawy.Dtos;
+using Repsotiry.Data;
 using Repsotiry.GenaricReposiory;
 using Repsotiry.spacification;
+using System.Security.Claims;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Rawy.Controllers
@@ -19,12 +22,14 @@ namespace Rawy.Controllers
         private readonly IMapper mapper;
      
         private readonly IGenaricrepostry<Record> genaricrepostryrecords;
+        private readonly RawyDbcontext rawyDbcontext;
 
-        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper,IGenaricrepostry<Record> genaricrepostryrecords)
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper,IGenaricrepostry<Record> genaricrepostryrecords,RawyDbcontext rawyDbcontext )
         {
             this.genaricrepostry = genaricrepostry;
             this.mapper = mapper;  
             this.genaricrepostryrecords = genaricrepostryrecords;
+            this.rawyDbcontext = rawyDbcontext;
         }
         //[HttpGet]
         //public async Task<ActionResult<IEnumerable
@@ -57,7 +62,32 @@ namespace Rawy.Controllers
         {
             var spac = new bookspacefcation(id);
             var book = await genaricrepostry.getbyidwithspacAsync(spac);
+            if (book == null) return NotFound();
+
             var mappeing = mapper.Map<Book, bookdtos>(book);
+
+            // ✅ حفظ اهتمامات المستخدم بناءً على فئات الكتاب
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                foreach (var cat in book.catygories)
+                {
+                    var exists = await rawyDbcontext.UserInterests
+                        .AnyAsync(ui => ui.UserId == userId && ui.CategoryId == cat.Id);
+
+                    if (!exists)
+                    {
+                        var interest = new UserInterest
+                        {
+                            UserId = userId,
+                            CategoryId = cat.Id
+                        };
+                        rawyDbcontext.UserInterests.Add(interest);
+                    }
+                }
+
+                await rawyDbcontext.SaveChangesAsync();
+            }
 
             return Ok(mappeing);
         }
