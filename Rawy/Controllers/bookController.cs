@@ -66,7 +66,7 @@ namespace Rawy.Controllers
 
             var mappeing = mapper.Map<Book, bookdtos>(book);
 
-            // ✅ حفظ اهتمامات المستخدم بناءً على فئات الكتاب
+   
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(userId))
             {

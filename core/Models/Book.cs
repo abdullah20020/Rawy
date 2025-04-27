@@ -42,7 +42,7 @@ namespace core.Models
         [Required]
         public Aurthor Aurthor { get; set; }
 
-
+       
 
     }
 }

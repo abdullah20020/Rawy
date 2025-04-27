@@ -8,6 +8,7 @@ using Rawy.Helpers;
 using Repsotiry.Data;
 using Repsotiry.GenaricReposiory;
 using Repsotiry.seeds;
+using Services;
 
 
 
@@ -95,7 +96,7 @@ namespace Rawy
 
             builder.Services.AddScoped(typeof(IGenaricrepostry<>), typeof(GenaricRepostry<>));
             builder.Services.AddScoped(typeof(IGenaricReposteryUSers<>), typeof(GenaricRepostryusers<>));
-
+            builder.Services.AddScoped<CsvGeneratorService>();
 
 
             var app = builder.Build();

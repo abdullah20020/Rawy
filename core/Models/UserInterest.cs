@@ -8,12 +8,11 @@ using System.Threading.Tasks;
 
 namespace core.Models
 {
-    public class UserInterest
+    public class UserInterest:BaseClass
     {
-        public int Id { get; set; }
 
         [Required]
-        public string UserId { get; set; }  // لو عندك AspNet Identity، غالبًا string
+        public string UserId { get; set; }
 
         [ForeignKey("UserId")]
         public BaseUser User { get; set; }

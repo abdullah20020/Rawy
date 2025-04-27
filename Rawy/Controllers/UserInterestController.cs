@@ -4,19 +4,30 @@ using Microsoft.EntityFrameworkCore;
 using core.Models;
 using System.Security.Claims;
 using Repsotiry.Data;
+using Repsotiry.GenaricReposiory;
+using Rawy.Dtos;
+using AutoMapper;
+using Services;
 
 namespace Rawy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // لازم اليوزر يكون مسجل دخول
+    [Authorize ] 
     public class UserInterestController : ControllerBase
     {
-        private readonly RawyDbcontext rawycontext;
+      
 
-        public UserInterestController(RawyDbcontext rawycontext)
+        private readonly RawyDbcontext rawyDbcontext;
+        private readonly IMapper mapper;
+        private readonly CsvGeneratorService csvService;
+
+        public UserInterestController(RawyDbcontext rawyDbcontext, IMapper mapper, CsvGeneratorService csvService)
         {
-          this.rawycontext = rawycontext;
+   
+            this.rawyDbcontext = rawyDbcontext;
+            this.mapper = mapper;
+            this.csvService = csvService;
         }
 
       
@@ -25,12 +36,17 @@ namespace Rawy.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var interests = await rawycontext.UserInterests
+            var interests = await rawyDbcontext.UserInterests
                 .Include(u => u.Category)
                 .Where(i => i.UserId == userId)
                 .ToListAsync();
+            var mappeing = mapper.Map<IEnumerable<UserInterest>, IEnumerable< UserInterestDtos>>(interests);
 
-            return Ok(interests);
+            var memoryStream = csvService.GenerateCsvInMemory(mappeing);
+
+            await csvService.SendCsvToPythonServerAsync(memoryStream);
+
+            return Ok(mappeing);
         }
 
 
@@ -39,14 +55,14 @@ namespace Rawy.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var interest = await rawycontext.UserInterests
+            var interest = await rawyDbcontext.UserInterests
                 .FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
 
             if (interest == null)
                 return NotFound();
 
-            rawycontext.UserInterests.Remove(interest);
-            await rawycontext.SaveChangesAsync();
+            rawyDbcontext.UserInterests.Remove(interest);
+            await rawyDbcontext.SaveChangesAsync();
 
             return NoContent();
         }
