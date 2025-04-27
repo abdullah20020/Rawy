@@ -13,10 +13,10 @@ namespace Rawy.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize ] 
+    //[Authorize]
     public class UserInterestController : ControllerBase
     {
-      
+
 
         private readonly RawyDbcontext rawyDbcontext;
         private readonly IMapper mapper;
@@ -24,23 +24,23 @@ namespace Rawy.Controllers
 
         public UserInterestController(RawyDbcontext rawyDbcontext, IMapper mapper, CsvGeneratorService csvService)
         {
-   
+
             this.rawyDbcontext = rawyDbcontext;
             this.mapper = mapper;
             this.csvService = csvService;
         }
 
-      
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserInterest>>> GetMyInterests()
+        public async Task<ActionResult<IEnumerable<UserInterestbook>>> GetMyInterests()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var interests = await rawyDbcontext.UserInterests
-                .Include(u => u.Category)
+                .Include(u => u.Book)
                 .Where(i => i.UserId == userId)
                 .ToListAsync();
-            var mappeing = mapper.Map<IEnumerable<UserInterest>, IEnumerable< UserInterestDtos>>(interests);
+            var mappeing = mapper.Map<IEnumerable<UserInterestbook>, IEnumerable<UserInterestDtos>>(interests);
 
             var memoryStream = csvService.GenerateCsvInMemory(mappeing);
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace core.Models
 {
-    public class UserInterest:BaseClass
+    public class UserInterestbook:BaseClass
     {
 
         [Required]
@@ -17,10 +17,10 @@ namespace core.Models
         [ForeignKey("UserId")]
         public BaseUser User { get; set; }
 
-        [ForeignKey("CategoryId")]
-        public int CategoryId { get; set; }
+        [ForeignKey("BookId")]
+        public int BookId { get; set; }
 
-        public Catygory Category { get; set; }
+        public Book Book { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -20,14 +20,14 @@ namespace Rawy.Controllers
     {
         private readonly IGenaricrepostry<Book> genaricrepostry;
         private readonly IMapper mapper;
-     
+
         private readonly IGenaricrepostry<Record> genaricrepostryrecords;
         private readonly RawyDbcontext rawyDbcontext;
 
-        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper,IGenaricrepostry<Record> genaricrepostryrecords,RawyDbcontext rawyDbcontext )
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext)
         {
             this.genaricrepostry = genaricrepostry;
-            this.mapper = mapper;  
+            this.mapper = mapper;
             this.genaricrepostryrecords = genaricrepostryrecords;
             this.rawyDbcontext = rawyDbcontext;
         }
@@ -66,27 +66,24 @@ namespace Rawy.Controllers
 
             var mappeing = mapper.Map<Book, bookdtos>(book);
 
-   
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(userId))
             {
-                foreach (var cat in book.catygories)
+                // تأكد إن ما فيش ريكورد سابق لنفس المستخدم ونفس الكتاب
+                var exists = await rawyDbcontext.UserInterests
+                    .AnyAsync(ui => ui.UserId == userId && ui.BookId == book.Id);
+
+                if (!exists)
                 {
-                    var exists = await rawyDbcontext.UserInterests
-                        .AnyAsync(ui => ui.UserId == userId && ui.CategoryId == cat.Id);
-
-                    if (!exists)
+                    var interest = new UserInterestbook
                     {
-                        var interest = new UserInterest
-                        {
-                            UserId = userId,
-                            CategoryId = cat.Id
-                        };
-                        rawyDbcontext.UserInterests.Add(interest);
-                    }
+                        UserId = userId,
+                        BookId = book.Id
+                    };
+                    rawyDbcontext.UserInterests.Add(interest);
+                    await rawyDbcontext.SaveChangesAsync();
                 }
-
-                await rawyDbcontext.SaveChangesAsync();
             }
 
             return Ok(mappeing);
