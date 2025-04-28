@@ -33,7 +33,7 @@ namespace Services
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
 
             content.Add(fileContent, "file", "user_interests.csv");
-            var response = await client.PostAsync("https://675c-34-75-72-15.ngrok-free.app/upload", content);
+            var response = await client.PostAsync("/upload", content);
 
 
             if (response.IsSuccessStatusCode)

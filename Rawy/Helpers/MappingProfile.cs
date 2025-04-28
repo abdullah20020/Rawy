@@ -48,11 +48,18 @@ namespace Rawy.Helpers
 
             //________________________________________________________/Review
 
-            CreateMap<Review, reviewsdto>()
+            CreateMap<Review, ReviewDto>()
                           .ForMember(b => b.Comment, db => db.MapFrom(a => a.Comment))
                           .ForMember(b => b.Rating, db => db.MapFrom(a => a.Rating))
+                          .ForMember(b => b.BookId, db => db.MapFrom(a => a.BookId))
+                          .ForMember(b => b.UserId, db => db.MapFrom(a => a.UserId))
                           .ForMember(b => b.DatePosted, db => db.MapFrom(a => a.DatePosted)).ReverseMap();
-            
+
+            CreateMap<Review, AddReviewDto>()
+              .ForMember(b => b.Comment, db => db.MapFrom(a => a.Comment))
+              .ForMember(b => b.Rating, db => db.MapFrom(a => a.Rating))
+              .ForMember(b => b.BookId, db => db.MapFrom(a => a.BookId)).ReverseMap();
+
             //________________________________________________________/Aurthor
             CreateMap<Aurthor, AuthorDtos>()
                      .ForMember(b => b.Name, db => db.MapFrom(a => a.Name))

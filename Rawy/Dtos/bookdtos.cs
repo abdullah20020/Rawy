@@ -21,7 +21,7 @@ namespace Rawy.Dtos
         public string CoverImage { get; set; }
         public List <CatygoryDtos > catygoriesname { get; set; }
 
-        public List <reviewsdto> reviewsdtos { get; set; } = new List<reviewsdto>(); 
+        public List <ReviewDto> reviewsdtos { get; set; } = new List<ReviewDto>(); 
         public List <RecordDtos> RecordDtos { get; set; } = new List<RecordDtos>(); 
 
      public AuthorDtos Aurthorname { get; set; }
