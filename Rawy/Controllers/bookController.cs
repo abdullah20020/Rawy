@@ -2,9 +2,11 @@
 using core.Models;
 using core.Prametars;
 using core.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
 using Repsotiry.Data;
 using Repsotiry.GenaricReposiory;
@@ -23,13 +25,15 @@ namespace Rawy.Controllers
 
         private readonly IGenaricrepostry<Record> genaricrepostryrecords;
         private readonly RawyDbcontext rawyDbcontext;
+        private readonly IMemoryCache memoryCache;
 
-        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext)
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache)
         {
             this.genaricrepostry = genaricrepostry;
             this.mapper = mapper;
             this.genaricrepostryrecords = genaricrepostryrecords;
             this.rawyDbcontext = rawyDbcontext;
+            this.memoryCache = memoryCache;
         }
         //[HttpGet]
         //public async Task<ActionResult<IEnumerable
@@ -123,7 +127,37 @@ namespace Rawy.Controllers
             await genaricrepostry.DeleteAsync(book);
             return NoContent();
         }
+        [HttpGet("recommendation")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<bookdtos>>> GetUserRecommendedBooks()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID is missing or invalid in the token.");
+            }
 
+            // التحقق من وجود التوصيات في الكاش
+            if (!memoryCache.TryGetValue(userId, out List<int> recommendedBookIds))
+            {
+                return NotFound("No recommendations found. Please login again.");
+            }
+
+            var books = new List<bookdtos>();
+
+            // جلب الكتب بناءً على التوصيات
+            foreach (int id in recommendedBookIds)
+            {
+                var spec = new bookspacefcation(id);
+                var book = await genaricrepostry.getbyidwithspacAsync(spec);
+                if (book != null)
+                {
+                    books.Add(mapper.Map<Book, bookdtos>(book));
+                }
+            }
+
+            return Ok(books);
+        }
     }
 }

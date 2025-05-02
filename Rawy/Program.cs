@@ -93,10 +93,10 @@ namespace Rawy
             //   builder.Services.AddIdentityServices(builder.Configuration);
 
             builder.Services.AddAutoMapper(typeof(MappingProfile));
-
+            builder.Services.AddMemoryCache();
             builder.Services.AddScoped(typeof(IGenaricrepostry<>), typeof(GenaricRepostry<>));
             builder.Services.AddScoped(typeof(IGenaricReposteryUSers<>), typeof(GenaricRepostryusers<>));
-            builder.Services.AddScoped<CsvGeneratorService>();
+            //builder.Services.AddScoped<CsvGeneratorService>();
 
 
             var app = builder.Build();

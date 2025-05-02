@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
+using System.Text.Json;
 
 namespace Rawy.Controllers
 {
@@ -17,29 +19,41 @@ namespace Rawy.Controllers
         private readonly SignInManager<BaseUser> _signInManager;
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _memoryCache;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         public AccountController(
             UserManager<BaseUser> userManager,
             SignInManager<BaseUser> signInManager,
             IAuthService authService,
-            IMapper mapper,
+            IMapper mapper, IMemoryCache memoryCache,
             RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _authService = authService;
             _mapper = mapper;
+            _memoryCache = memoryCache;
             _roleManager = roleManager;
         }
-
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> login(LoginDto model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null) return Unauthorized();
+
             var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
             if (!result.Succeeded) return Unauthorized();
+
+            // استدعاء التوصيات من Flask بعد التحقق من الدخول
+            List<int> recommendedBookIds = await GetRecommendationsFromFlask(user.Id);
+
+            // إذا كانت التوصيات موجودة، نخزنها في الكاش
+            if (recommendedBookIds != null && recommendedBookIds.Any())
+            {
+                _memoryCache.Set(user.Id, recommendedBookIds, TimeSpan.FromHours(1)); // تخزين لمدة ساعة
+            }
+
             return Ok(new UserDto()
             {
                 Email = user.Email,
@@ -47,7 +61,7 @@ namespace Rawy.Controllers
                 Token = await _authService.CreateTokenAsync(user, _userManager)
             });
         }
-        
+
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> register(RegisterDto model)
         {
@@ -158,6 +172,34 @@ namespace Rawy.Controllers
             return Ok($"User with ID {id} has been deleted.");
         }
 
+        private async Task<List<int>?> GetRecommendationsFromFlask(string userId)
+        {
+            try
+            {
+                using var httpClient = new HttpClient();
+                string flaskUrl = $"http://localhost:5000/recommendations?user_id={userId}";
 
+                var response = await httpClient.GetAsync(flaskUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var flaskResponse = JsonSerializer.Deserialize<FlaskResponse>(json);
+
+                if (flaskResponse?.Recommendations == null || !flaskResponse.Recommendations.Any())
+                {
+                    return new List<int>(); // أو يمكنك إرجاع null حسب حاجتك
+                }
+
+                return flaskResponse.Recommendations;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
-}
+    }
+
