@@ -23,20 +23,37 @@ namespace Rawy.Extensions
                 option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters()
-                    {
-                        ValidateAudience = true,
-                        ValidAudience = configuration["JWT:ValidAudience"],
-                        ValidIssuer = configuration["JWT:ValidIssuer"],
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromDays(double.Parse(configuration["JWT:DurationInDays"])),
-                           NameClaimType = ClaimTypes.NameIdentifier
-                    };
-                });
+       .AddJwtBearer(options =>
+       {
+           options.TokenValidationParameters = new TokenValidationParameters()
+           {
+               ValidateAudience = true,
+               ValidAudience = configuration["JWT:ValidAudience"],
+               ValidIssuer = configuration["JWT:ValidIssuer"],
+               ValidateIssuerSigningKey = true,
+               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
+               ValidateLifetime = true,
+               ClockSkew = TimeSpan.FromDays(double.Parse(configuration["JWT:DurationInDays"])),
+               NameClaimType = ClaimTypes.NameIdentifier
+           };
+
+           // ✅ support JWT for SignalR
+           options.Events = new JwtBearerEvents
+           {
+               OnMessageReceived = context =>
+               {
+                   var accessToken = context.Request.Query["access_token"];
+                   var path = context.HttpContext.Request.Path;
+
+                   if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                   {
+                       context.Token = accessToken;
+                   }
+
+                   return Task.CompletedTask;
+               }
+           };
+       });
             return services;
         }
 

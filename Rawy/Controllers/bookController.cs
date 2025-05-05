@@ -5,12 +5,14 @@ using core.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
 using Repsotiry.Data;
 using Repsotiry.GenaricReposiory;
 using Repsotiry.spacification;
+using Services;
 using System.Security.Claims;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -21,15 +23,17 @@ namespace Rawy.Controllers
     public class bookController : ControllerBase
     {
         private readonly IGenaricrepostry<Book> genaricrepostry;
+        private readonly IHubContext<NotificationHub> hubContext;
         private readonly IMapper mapper;
 
         private readonly IGenaricrepostry<Record> genaricrepostryrecords;
         private readonly RawyDbcontext rawyDbcontext;
         private readonly IMemoryCache memoryCache;
 
-        public bookController(IGenaricrepostry<Book> genaricrepostry, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache)
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IHubContext<NotificationHub> hubContext, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache)
         {
             this.genaricrepostry = genaricrepostry;
+            this.hubContext = hubContext;
             this.mapper = mapper;
             this.genaricrepostryrecords = genaricrepostryrecords;
             this.rawyDbcontext = rawyDbcontext;
@@ -98,6 +102,8 @@ namespace Rawy.Controllers
         {
             var bookEntity = mapper.Map<Book>(bookDto);
             await genaricrepostry.set(bookEntity);
+
+            await hubContext.Clients.All.SendAsync("ReceiveNotification", $"new book,We added : {bookDto.BookTitle}");
             return CreatedAtAction(nameof(getbyidwithspac), new { id = bookEntity.Id }, mapper.Map<bookdtos>(bookEntity));
         }
 

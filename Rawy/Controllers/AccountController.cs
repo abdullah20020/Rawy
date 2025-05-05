@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
 using Repsotiry.Data;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Rawy.Controllers
@@ -123,6 +124,40 @@ namespace Rawy.Controllers
                 Cv_Url = user.Cv_Url,
                 ReviewsCount = user.Reviews?.Count ?? 0,
                 favoriteCount = user.Favorites?.Count ?? 0
+            });
+        }
+        [HttpGet]
+        [Authorize] 
+        public async Task<ActionResult<UserAccountDto>> UserAccount()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User ID not found in token");
+
+            var user = await rawyDbcontext.Set<BaseUser>()
+                .Include(u => u.Reviews)
+                .Include(u => u.Favorites)
+                .Include(u => u.Records)
+                .Include(u => u.Playlists)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(new UserAccountDto
+            {
+                
+                email = user.Email,
+                DisplayName = user.UserName,
+                ProfilePicture = user.ProfilePicture,
+                DateJoined = user.DateJoined,
+                Cv_Url = user.Cv_Url,
+                Playlists = user.Playlists,     
+                Favorites = user.Favorites, 
+                Records = user.Records,
+                Reviews = user.Reviews
+    
             });
         }
 

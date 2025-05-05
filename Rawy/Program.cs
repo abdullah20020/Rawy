@@ -1,4 +1,5 @@
-﻿using core.Models;
+﻿using core.Contracts.NotificationService;
+using core.Models;
 using core.Repository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -100,6 +101,11 @@ namespace Rawy
             builder.Services.AddMemoryCache();
             builder.Services.AddScoped(typeof(IGenaricrepostry<>), typeof(GenaricRepostry<>));
             builder.Services.AddScoped(typeof(IGenaricReposteryUSers<>), typeof(GenaricRepostryusers<>));
+            builder.Services.AddSignalR();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
+
+
             //builder.Services.AddScoped<CsvGeneratorService>();
             builder.Services.AddCors(options =>
             {
@@ -162,7 +168,7 @@ namespace Rawy
             app.UseStaticFiles();
 
             app.MapControllers();
-
+            app.MapHub<NotificationHub>("/hubs/notifications");
             app.Run();
             #region MyRegion
 
