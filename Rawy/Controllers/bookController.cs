@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
 using Repsotiry.Data;
 using Repsotiry.GenaricReposiory;
+using Repsotiry.Migrations;
 using Repsotiry.spacification;
 using Services;
 using System.Security.Claims;
@@ -29,8 +30,9 @@ namespace Rawy.Controllers
         private readonly IGenaricrepostry<Record> genaricrepostryrecords;
         private readonly RawyDbcontext rawyDbcontext;
         private readonly IMemoryCache memoryCache;
+        private readonly IGenaricrepostry<Notification> genaricrepostrynotification;
 
-        public bookController(IGenaricrepostry<Book> genaricrepostry, IHubContext<NotificationHub> hubContext, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache)
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IHubContext<NotificationHub> hubContext, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache,IGenaricrepostry<Notification>genaricrepostrynotification)
         {
             this.genaricrepostry = genaricrepostry;
             this.hubContext = hubContext;
@@ -38,6 +40,7 @@ namespace Rawy.Controllers
             this.genaricrepostryrecords = genaricrepostryrecords;
             this.rawyDbcontext = rawyDbcontext;
             this.memoryCache = memoryCache;
+            this.genaricrepostrynotification = genaricrepostrynotification;
         }
         //[HttpGet]
         //public async Task<ActionResult<IEnumerable
@@ -77,8 +80,7 @@ namespace Rawy.Controllers
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(userId))
-            {
-                // تأكد إن ما فيش ريكورد سابق لنفس المستخدم ونفس الكتاب
+            { 
                 var exists = await rawyDbcontext.UserInterests
                     .AnyAsync(ui => ui.UserId == userId && ui.BookId == book.Id);
 
@@ -102,6 +104,18 @@ namespace Rawy.Controllers
         {
             var bookEntity = mapper.Map<Book>(bookDto);
             await genaricrepostry.set(bookEntity);
+            var users = await rawyDbcontext.Users.ToListAsync();
+
+  
+            foreach (var user in users)
+            {
+                var notification = new Notification
+                {
+                    Message = $"we add new book: {bookDto.BookTitle}",
+                    UserId = user.Id
+                };
+                await genaricrepostrynotification.set(notification);
+            }
 
             await hubContext.Clients.All.SendAsync("ReceiveNotification", $"new book,We added : {bookDto.BookTitle}");
             return CreatedAtAction(nameof(getbyidwithspac), new { id = bookEntity.Id }, mapper.Map<bookdtos>(bookEntity));
@@ -115,11 +129,26 @@ namespace Rawy.Controllers
             {
                 return NotFound();
             }
+            var users = await rawyDbcontext.Users.ToListAsync();
+
+
+            foreach (var user in users)
+            {
+                var notification = new Notification
+                {
+                    Message = $"we updated: {bookDto.BookTitle}",
+                    UserId = user.Id
+                };
+                await genaricrepostrynotification.set(notification);
+            }
+            await hubContext.Clients.All.SendAsync("ReceiveNotification", $"we updated : {bookDto.BookTitle}");
 
             var updatedBook = mapper.Map(bookDto, existingBook);
             await genaricrepostry.UpdateAsync(updatedBook);
             return NoContent();
         }
+     
+
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteBook(int id)
@@ -129,6 +158,7 @@ namespace Rawy.Controllers
             {
                 return NotFound();
             }
+
 
             await genaricrepostry.DeleteAsync(book);
             return NoContent();
@@ -144,7 +174,7 @@ namespace Rawy.Controllers
                 return Unauthorized("User ID is missing or invalid in the token.");
             }
 
-            // التحقق من وجود التوصيات في الكاش
+  
             if (!memoryCache.TryGetValue(userId, out List<int> recommendedBookIds))
             {
                 return NotFound("No recommendations found. Please login again.");
@@ -152,7 +182,7 @@ namespace Rawy.Controllers
 
             var books = new List<bookdtos>();
 
-            // جلب الكتب بناءً على التوصيات
+     
             foreach (int id in recommendedBookIds)
             {
                 var spec = new bookspacefcation(id);

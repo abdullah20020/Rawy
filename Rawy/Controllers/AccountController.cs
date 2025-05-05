@@ -253,7 +253,8 @@ namespace Rawy.Controllers
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var flaskResponse = JsonSerializer.Deserialize<FlaskResponse>(json);
+                Console.WriteLine(json);  // Debugging the raw JSON
+                var flaskResponse = JsonSerializer.Deserialize<FlaskResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (flaskResponse?.Recommendations == null || !flaskResponse.Recommendations.Any())
                 {
