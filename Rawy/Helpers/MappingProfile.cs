@@ -11,6 +11,18 @@ namespace Rawy.Helpers
     {
         public MappingProfile()
         {
+            //----------------------------------------------------------/User
+            //CreateMap<BaseUser, showuserdto>()
+            //    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+            //    .ForMember(b => b.DisplayName, db => db.MapFrom(a => a.DisplayName))
+            //    .ForMember(b => b.ProfilePicture, db => db.MapFrom(a => a.ProfilePicture))
+            //    .ForMember(b => b.DateJoined, db => db.MapFrom(a => a.DateJoined))
+            //    .ForMember(b => b.Reviews, db => db.MapFrom(a => a.Reviews))
+            //    .ForMember(b => b.Records, db => db.MapFrom(a => a.Records))
+            //    .ForMember(b => b.Cv_Url, db => db.MapFrom(a => a.Cv_Url))
+            //    .ForMember(b => b.Favorites, db => db.MapFrom(a => a.Favorites))
+            //    .ForMember(b => b.Playlists, db => db.MapFrom(a => a.Playlists));
+            //________________________________________________________/Book
             CreateMap<Book, bookdtos>()
                  .ForMember(b => b.Aurthorname, db => db.MapFrom(a => a.Aurthor))
                  .ForMember(dest => dest.RecordDtos, opt => opt.MapFrom(src => src.record.Where(r => r.Okay_Record)))

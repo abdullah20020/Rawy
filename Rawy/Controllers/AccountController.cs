@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
+using Repsotiry.Data;
 using System.Text.Json;
 
 namespace Rawy.Controllers
@@ -20,6 +22,7 @@ namespace Rawy.Controllers
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
         private readonly IMemoryCache _memoryCache;
+        private readonly RawyDbcontext rawyDbcontext;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         public AccountController(
@@ -27,6 +30,7 @@ namespace Rawy.Controllers
             SignInManager<BaseUser> signInManager,
             IAuthService authService,
             IMapper mapper, IMemoryCache memoryCache,
+            RawyDbcontext rawyDbcontext,
             RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
@@ -34,6 +38,7 @@ namespace Rawy.Controllers
             _authService = authService;
             _mapper = mapper;
             _memoryCache = memoryCache;
+            this.rawyDbcontext = rawyDbcontext;
             _roleManager = roleManager;
         }
         [HttpPost("login")]
@@ -45,13 +50,12 @@ namespace Rawy.Controllers
             var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
             if (!result.Succeeded) return Unauthorized();
 
-            // استدعاء التوصيات من Flask بعد التحقق من الدخول
+
             List<int> recommendedBookIds = await GetRecommendationsFromFlask(user.Id);
 
-            // إذا كانت التوصيات موجودة، نخزنها في الكاش
             if (recommendedBookIds != null && recommendedBookIds.Any())
             {
-                _memoryCache.Set(user.Id, recommendedBookIds, TimeSpan.FromHours(1)); // تخزين لمدة ساعة
+                _memoryCache.Set(user.Id, recommendedBookIds, TimeSpan.FromHours(1));
             }
 
             return Ok(new UserDto()
@@ -61,6 +65,8 @@ namespace Rawy.Controllers
                 Token = await _authService.CreateTokenAsync(user, _userManager)
             });
         }
+
+
 
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> register(RegisterDto model)
@@ -75,11 +81,11 @@ namespace Rawy.Controllers
                 DisplayName = model.DisplayName,
                 PhoneNumber = model.PhoneNumber,
             };
-    
+
             var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded) return BadRequest(); 
+            if (!result.Succeeded) return BadRequest();
             await _userManager.AddToRoleAsync(user, "User");
-            
+
             return Ok(new UserDto()
             {
                 Email = user.Email,
@@ -93,8 +99,34 @@ namespace Rawy.Controllers
         public async Task<ActionResult<bool>> CheckEmailExists(string email)
     => await _userManager.FindByEmailAsync(email) is not null;
 
- 
-      [HttpPost("make-admin-by-id")]
+        [HttpGet("{id}")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserDto>> GetUserById(string id)
+        {
+            var user = await rawyDbcontext.Set<BaseUser>()
+                .Include(u => u.Reviews)
+                .Include(u => u.Favorites)
+                .Include(u => u.Records)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(new showuserdto
+            {
+                Id = user.Id,
+                email = user.Email,
+                records = user.Records,
+                DisplayName = user.UserName,
+                ProfilePicture = user.ProfilePicture,
+                DateJoined = user.DateJoined,
+                Cv_Url = user.Cv_Url,
+                ReviewsCount = user.Reviews?.Count ?? 0,
+                favoriteCount = user.Favorites?.Count ?? 0
+            });
+        }
+
+        [HttpPost("make-admin-by-id")]
         public async Task<ActionResult> MakeUserAdminById([FromBody] string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -106,7 +138,7 @@ namespace Rawy.Controllers
             return Ok($"User with ID {userId} is now an admin.");
         }
 
-        
+
         [HttpGet("all-users")]
         public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAllUsersWithTokens()
         {
@@ -190,7 +222,7 @@ namespace Rawy.Controllers
 
                 if (flaskResponse?.Recommendations == null || !flaskResponse.Recommendations.Any())
                 {
-                    return new List<int>(); // أو يمكنك إرجاع null حسب حاجتك
+                    return new List<int>();
                 }
 
                 return flaskResponse.Recommendations;
@@ -201,5 +233,5 @@ namespace Rawy.Controllers
             }
         }
     }
-    }
+}
 

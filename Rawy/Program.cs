@@ -17,6 +17,7 @@ namespace Rawy
     public class Program
     {
 
+        #region MyRegion
         //public static async Task Main(string[] args)
         //{
         //    var builder = WebApplication.CreateBuilder(args);
@@ -61,7 +62,8 @@ namespace Rawy
         //    app.UseAuthorization();
         //    app.UseStaticFiles();
         //    app.MapControllers();
-        //    app.Run();
+        //    app.Run(); 
+        #endregion
 
         public async static Task Main(string[] args)
         {
@@ -69,19 +71,21 @@ namespace Rawy
 
             // Add services to the container.
 
-            builder.Services.AddControllers();  
+            builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+            #region MyRegion
             //var IDentyconnectionString = builder.Configuration.GetConnectionString("IdintetyConnection");
             // //Register the DbContext with the connection string
 
             // builder.Services.AddDbContext<IdentityDbContexts>(options =>
             //  options.UseSqlServer(IDentyconnectionString));
 
+            #endregion
             builder.Services.AddDbContext<RawyDbcontext>(options =>
                 options.UseSqlServer(connectionString));
 
@@ -97,6 +101,16 @@ namespace Rawy
             builder.Services.AddScoped(typeof(IGenaricrepostry<>), typeof(GenaricRepostry<>));
             builder.Services.AddScoped(typeof(IGenaricReposteryUSers<>), typeof(GenaricRepostryusers<>));
             //builder.Services.AddScoped<CsvGeneratorService>();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+          
+                });
+            });
 
 
             var app = builder.Build();
@@ -108,25 +122,32 @@ namespace Rawy
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 await AppDbInitializer.SeedAdminAsync(userManager, roleManager);
             }
-
-            //using var scope = app.Services.CreateScope();
-            //var services = scope.ServiceProvider;
-            //var _dbcontext=services.GetRequiredService<RawyDbcontext>();
-            //var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-            //try
-            //{ 
-            // await _dbcontext.Database.GetAppliedMigrationsAsync();
-            //}
-            //catch (Exception ex)
-            //{
-            //    var logger = loggerFactory.CreateLogger<Program>();
-            //    logger.LogError(ex, "an error has been occured during apply the migration");
-            //}
+            app.UseCors("AllowFrontend");
 
 
 
 
-            // Configure the HTTP request pipeline.
+            #region MyRegion
+
+            ////using var scope = app.Services.CreateScope();
+            ////var services = scope.ServiceProvider;
+            ////var _dbcontext=services.GetRequiredService<RawyDbcontext>();
+            ////var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            ////try
+            ////{ 
+            //// await _dbcontext.Database.GetAppliedMigrationsAsync();
+            ////}
+            ////catch (Exception ex)
+            ////{
+            ////    var logger = loggerFactory.CreateLogger<Program>();
+            ////    logger.LogError(ex, "an error has been occured during apply the migration");
+            ////}
+
+
+
+
+            //// Configure the HTTP request pipeline. 
+            #endregion
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -143,6 +164,7 @@ namespace Rawy
             app.MapControllers();
 
             app.Run();
+            #region MyRegion
 
             //var builder = WebApplication.CreateBuilder(args);
 
@@ -209,7 +231,8 @@ namespace Rawy
             //app.UseAuthorization();
 
             //app.MapControllers();
-            //app.Run();
+            //app.Run(); 
+            #endregion
         }
     }
 }
