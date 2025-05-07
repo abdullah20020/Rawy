@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repsotiry.Data;
 
@@ -11,9 +12,10 @@ using Repsotiry.Data;
 namespace Repsotiry.Migrations
 {
     [DbContext(typeof(RawyDbcontext))]
-    partial class RawyDbcontextModelSnapshot : ModelSnapshot
+    [Migration("20250506113424_prodcast ")]
+    partial class prodcast
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,31 +212,6 @@ namespace Repsotiry.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("core.Models.episode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("ProdcastId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProdcastId");
-
-                    b.ToTable("episode");
-                });
-
             modelBuilder.Entity("core.Models.Favorite", b =>
                 {
                     b.Property<int>("Id")
@@ -369,11 +346,11 @@ namespace Repsotiry.Migrations
                     b.Property<bool>("Okay_Record")
                         .HasColumnType("bit");
 
+                    b.Property<int>("ProdcastId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ProfilePicture")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("episodeId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -381,8 +358,7 @@ namespace Repsotiry.Migrations
 
                     b.HasIndex("BookId");
 
-                    b.HasIndex("episodeId")
-                        .IsUnique();
+                    b.HasIndex("ProdcastId");
 
                     b.ToTable("Records");
                 });
@@ -414,7 +390,7 @@ namespace Repsotiry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("episodeId")
+                    b.Property<int>("p")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -424,8 +400,6 @@ namespace Repsotiry.Migrations
                     b.HasIndex("ProdcastId");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("episodeId");
 
                     b.ToTable("Reviews");
                 });
@@ -646,13 +620,6 @@ namespace Repsotiry.Migrations
                     b.Navigation("Aurthor");
                 });
 
-            modelBuilder.Entity("core.Models.episode", b =>
-                {
-                    b.HasOne("core.Models.Prodcast", null)
-                        .WithMany("episode")
-                        .HasForeignKey("ProdcastId");
-                });
-
             modelBuilder.Entity("core.Models.Favorite", b =>
                 {
                     b.HasOne("core.Models.BaseUser", "User")
@@ -712,15 +679,15 @@ namespace Repsotiry.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("core.Models.episode", "Episode")
-                        .WithOne("record")
-                        .HasForeignKey("core.Models.Record", "episodeId")
+                    b.HasOne("core.Models.Prodcast", "Prodcast")
+                        .WithMany("records")
+                        .HasForeignKey("ProdcastId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Book");
 
-                    b.Navigation("Episode");
+                    b.Navigation("Prodcast");
 
                     b.Navigation("User");
                 });
@@ -743,15 +710,7 @@ namespace Repsotiry.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("core.Models.episode", "Episode")
-                        .WithMany("reviews")
-                        .HasForeignKey("episodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Books");
-
-                    b.Navigation("Episode");
 
                     b.Navigation("Prodcast");
 
@@ -868,19 +827,11 @@ namespace Repsotiry.Migrations
                     b.Navigation("reviews");
                 });
 
-            modelBuilder.Entity("core.Models.episode", b =>
-                {
-                    b.Navigation("record")
-                        .IsRequired();
-
-                    b.Navigation("reviews");
-                });
-
             modelBuilder.Entity("core.Models.Prodcast", b =>
                 {
                     b.Navigation("Playlist");
 
-                    b.Navigation("episode");
+                    b.Navigation("records");
 
                     b.Navigation("reviews");
                 });

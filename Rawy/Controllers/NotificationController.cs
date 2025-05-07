@@ -62,5 +62,7 @@ namespace Rawy.Controllers
 
             return Ok("Notification deleted");
         }
+
+       
     }
 }

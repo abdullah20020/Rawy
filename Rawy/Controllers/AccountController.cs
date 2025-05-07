@@ -95,8 +95,8 @@ namespace Rawy.Controllers
             });
         }
 
-        [Authorize]
-        [HttpGet("emailexists")]
+
+        [HttpGet("Email_exists")]
         public async Task<ActionResult<bool>> CheckEmailExists(string email)
     => await _userManager.FindByEmailAsync(email) is not null;
 
@@ -125,6 +125,36 @@ namespace Rawy.Controllers
                 ReviewsCount = user.Reviews?.Count ?? 0,
                 favoriteCount = user.Favorites?.Count ?? 0
             });
+        }
+        [HttpPost("upload-profile-picture")]
+        public async Task<IActionResult> UploadProfilePicture([FromForm] ProfilePictureDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // أو من الباراميتر
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            if (dto.ProfilePicture == null || dto.ProfilePicture.Length == 0)
+                return BadRequest("No file uploaded");
+
+            // تحديد اسم ومسار الملف
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ProfilePicture.FileName)}";
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "profilepics", fileName);
+
+            // إنشاء المجلد لو مش موجود
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await dto.ProfilePicture.CopyToAsync(stream);
+            }
+
+            // حفظ رابط الصورة في قاعدة البيانات
+            user.ProfilePicture = $"/profilepics/{fileName}";
+            await _userManager.UpdateAsync(user);
+
+            return Ok(new { imageUrl = user.ProfilePicture });
         }
         [HttpGet]
         [Authorize] 

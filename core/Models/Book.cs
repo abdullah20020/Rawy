@@ -33,8 +33,8 @@ namespace core.Models
         public ICollection<Catygory> catygories { get; set; } = new HashSet<Catygory>();
 
         public ICollection<Favorite> Favorites { get; set; } = new HashSet<Favorite>();
-      
-       public ICollection<Record> record { get; set; } =new HashSet<Record>();
+
+         public ICollection <Record > record { get; set; } = new HashSet <Record>();   
         [Required]
         [ForeignKey("AurthorId")]
         public int AurthorId { get; set; }

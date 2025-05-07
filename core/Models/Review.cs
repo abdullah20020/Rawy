@@ -23,6 +23,13 @@ namespace core.Models
         [ForeignKey("BookId")]
         public Book? Books { get; set; }
 
+
+        public int ProdcastId { get; set; }
+        public Prodcast Prodcast { get; set; }
+
+        public int episodeId { get; set; }
+        public episode Episode { get; set; }
+
         [Range(1, 5)]
         public int? Rating { get; set; } 
 

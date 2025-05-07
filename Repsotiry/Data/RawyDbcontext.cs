@@ -66,6 +66,7 @@ namespace Repsotiry.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<BaseUser> users { get; set; }
       public DbSet<UserInterestbook> UserInterests { get; set; }
+      public DbSet<Prodcast> prodcasts { get; set; }
 
         public DbSet<Notification> Notifications { get; set; }
 
