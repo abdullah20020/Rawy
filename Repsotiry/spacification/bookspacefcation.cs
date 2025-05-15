@@ -11,8 +11,11 @@ namespace Repsotiry.spacification
 {
     public class bookspacefcation:BaseSpacfication<Book>
     {
-        public bookspacefcation(Bookspecpram specpram) : base(b=>!specpram.authorId.HasValue||b.AurthorId== specpram.authorId
-        && string.IsNullOrEmpty(specpram.Search) || b.BookTitle.ToLower().Contains(specpram.Search) && b.record.Any(r => r.Okay_Record == true))
+        public bookspacefcation(Bookspecpram specpram) : base(b =>
+    (!specpram.authorId.HasValue || b.AurthorId == specpram.authorId) &&
+    (string.IsNullOrEmpty(specpram.Search) || b.BookTitle.ToLower().Contains(specpram.Search.ToLower())) &&
+    (!specpram.HasRecordingOnly || b.record.Any(r => r.Okay_Record == true))
+)
         {
             includes.Add(b => b.Aurthor);
             includes.Add(b => b.reviews);

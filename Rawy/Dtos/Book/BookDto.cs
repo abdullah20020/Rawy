@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Rawy.Dtos.Base;
-using Rawy.Dtos.Category;
 using Rawy.Dtos.Review;
-using Rawy.Dtos.Record;
+
 
 namespace Rawy.Dtos.Book
 {
-    public class BookDto : BaseDto
+    public class BookDto
     {
         [Required]
         [StringLength(200)]
@@ -29,12 +28,12 @@ namespace Rawy.Dtos.Book
         [Required]
         public string CoverImageUrl { get; set; }
 
-        public AuthorDto Author { get; set; }
+        public AuthorDtos Author { get; set; }
 
-        public ICollection<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
+        public ICollection<CatygoryDtos> Categories { get; set; } = new List<CatygoryDtos>();
 
         public ICollection<ReviewDto> Reviews { get; set; } = new List<ReviewDto>();
 
-        public ICollection<RecordDto> Records { get; set; } = new List<RecordDto>();
+        public ICollection<RecordDtos> Records { get; set; } = new List<RecordDtos>();
     }
 } 

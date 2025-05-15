@@ -32,14 +32,14 @@ namespace Rawy.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CatygoryDtos>> GetCatygoryById(int id)
+        public async Task<ActionResult<CatygorybyidDtos>> GetCatygoryById(int id)
         {
             var category = await catygoryrepo.GetByIdAsync(id);
 
             if (category == null)
                 return NotFound($"Catygory with id {id} not found.");
 
-            var dto = mapper.Map<CatygoryDtos>(category);
+            var dto = mapper.Map<CatygorybyidDtos>(category);
 
             return Ok(dto);
         }

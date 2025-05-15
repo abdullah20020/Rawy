@@ -4,7 +4,7 @@ namespace Rawy.Dtos
 {
     public class ProdcastDto
     {
-        public int Id { get; set; }
+ 
         public string Prodcastname { get; set; }
 
         public string? Prodcastimage { get; set; }

@@ -15,10 +15,10 @@ namespace core.Models
         public string AudioFile { get; set; }
         public DateTime DatePosted { get; set; } = DateTime.UtcNow;
          public bool Okay_Record { get; set; } = false; 
-        public int BookId { get; set; }
-        public Book Book { get; set; }
-        public int episodeId { get; set; }
-        public episode Episode { get; set; }
+        public int? BookId { get; set; }
+        public Book? Book { get; set; }
+        public int? episodeId { get; set; }
+        public episode? Episode { get; set; }
         public string? BaseUserId { get; set; }
         public BaseUser? User { get; set; }
 

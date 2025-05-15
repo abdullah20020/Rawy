@@ -4,7 +4,7 @@ namespace Rawy.Dtos
 {
     public class showuserdto
     {
-        public string Id { get; set; }
+
         public string email { get; set; }
         public int favoriteCount { get; set; }
 

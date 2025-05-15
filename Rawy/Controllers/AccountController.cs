@@ -115,7 +115,7 @@ namespace Rawy.Controllers
 
             return Ok(new showuserdto
             {
-                Id = user.Id,
+          
                 email = user.Email,
                 records = user.Records,
                 DisplayName = user.UserName,
@@ -129,7 +129,7 @@ namespace Rawy.Controllers
         [HttpPost("upload-profile-picture")]
         public async Task<IActionResult> UploadProfilePicture([FromForm] ProfilePictureDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // أو من الباراميتر
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
@@ -138,11 +138,11 @@ namespace Rawy.Controllers
             if (dto.ProfilePicture == null || dto.ProfilePicture.Length == 0)
                 return BadRequest("No file uploaded");
 
-            // تحديد اسم ومسار الملف
+         
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ProfilePicture.FileName)}";
             var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "profilepics", fileName);
 
-            // إنشاء المجلد لو مش موجود
+        
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
             using (var stream = new FileStream(path, FileMode.Create))
@@ -150,7 +150,7 @@ namespace Rawy.Controllers
                 await dto.ProfilePicture.CopyToAsync(stream);
             }
 
-            // حفظ رابط الصورة في قاعدة البيانات
+         
             user.ProfilePicture = $"/profilepics/{fileName}";
             await _userManager.UpdateAsync(user);
 
@@ -229,6 +229,7 @@ namespace Rawy.Controllers
 
 
         [HttpPost("add-user")]
+        [Authorize (Roles ="Admin")]
         public async Task<ActionResult<UserDto>> AddUserByAdmin(RegisterDto model)
         {
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
@@ -283,7 +284,7 @@ namespace Rawy.Controllers
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                Console.WriteLine(json);  // Debugging the raw JSON
+                Console.WriteLine(json);
                 var flaskResponse = JsonSerializer.Deserialize<FlaskResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (flaskResponse?.Recommendations == null || !flaskResponse.Recommendations.Any())

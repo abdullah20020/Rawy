@@ -38,6 +38,9 @@ namespace Repsotiry.spacification
         public AuthorSpecfication(int id) : base(f => f.Id == id)
         {
             includes.Add(f => f.Books);
+            AddThenInclude(q => q.Include(PL => PL.Books).ThenInclude(b => b.record));
+            AddThenInclude(q => q.Include(PL => PL.Books).ThenInclude(b => b.reviews));
+            AddThenInclude(q => q.Include(PL => PL.Books).ThenInclude(b => b.catygories));
         }
 
   

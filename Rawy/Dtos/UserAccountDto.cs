@@ -12,7 +12,7 @@ namespace Rawy.Dtos
         public string? Cv_Url { get; set; }
         public ICollection<Record>? Records { get; set; } 
         public ICollection<Playlist>? Playlists { get; set; }
-        public ICollection<Review>? Reviews { get; set; } 
+        public ICollection<core.Models.Review>? Reviews { get; set; } 
         public ICollection<Favorite>? Favorites { get; set; }
     }
 }

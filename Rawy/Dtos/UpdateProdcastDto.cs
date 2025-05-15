@@ -4,7 +4,6 @@ namespace Rawy.Dtos
 {
     public class UpdateProdcastDto
     {
-        public int Id { get; set; }
         public string? Prodcastname { get; set; }
         public string? Prodcastimage { get; set; }
         public string? BaseUserId { get; set; }

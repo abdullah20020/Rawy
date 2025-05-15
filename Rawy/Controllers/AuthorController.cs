@@ -38,13 +38,13 @@ namespace Rawy.Controllers
 
         //// GET: api/Author/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AuthorDtos>> GetAuthor(int id)
+        public async Task<ActionResult<authoridDtos>> GetAuthor(int id)
         {
             var Author = new AuthorSpecfication(id);
             var authors = await genaricrepostry.getbyidwithspacAsync(Author);
             if (authors == null) return NotFound();
 
-            var authorDtos = mapper.Map<Aurthor, AuthorDtos>(authors);
+            var authorDtos = mapper.Map<Aurthor, authoridDtos>(authors);
             return Ok(authorDtos);
         }
 

@@ -4,7 +4,7 @@ namespace Rawy.Dtos
 {
     public class CatygoryDtos
     {
-        public int Id { get; set; }
+
 
 
         [Required]

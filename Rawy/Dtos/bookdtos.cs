@@ -7,7 +7,7 @@ namespace Rawy.Dtos
     public class bookdtos
     {
 
-        public int Id { get; set; }
+  
 
         public string BookTitle { get; set; }
 

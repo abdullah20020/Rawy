@@ -29,6 +29,7 @@ namespace core.Prametars
         }
         public string? sort { get; set; }
         public int? authorId { get; set; }
+        public bool HasRecordingOnly { get; set; } = false;
 
     }
 }

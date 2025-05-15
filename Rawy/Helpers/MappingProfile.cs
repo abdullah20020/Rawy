@@ -27,7 +27,7 @@ namespace Rawy.Helpers
             CreateMap<Book, bookdtos>()
                 
                  .ForMember(b => b.Aurthorname, db => db.MapFrom(a => a.Aurthor))
-                 .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+          
                  .ForMember(dest => dest.RecordDtos, opt => opt.MapFrom(src => src.record.Where(r => r.Okay_Record)))
                  .ForMember(b => b.book, db => db.MapFrom(a => a.bookurl))
                  .ForMember(b => b.catygoriesname, db => db.MapFrom(a => a.catygories))
@@ -42,20 +42,25 @@ namespace Rawy.Helpers
             //________________________________________________________/Catygory
 
             CreateMap<Catygory, CatygoryDtos>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+    
                 .ForMember(b => b.Type, O => O.MapFrom(a => a.Type));
+
+            CreateMap<Catygory, CatygorybyidDtos >()
+
+    .ForMember(b => b.Name, O => O.MapFrom(a => a.Type))
+    .ForMember(b => b.bookdtos, O => O.MapFrom(a => a.books));
 
             CreateMap<AddCatygoryDto, Catygory>()
     .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Name));
 
             CreateMap<UpdateCatygoryDto, Catygory>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+     
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Name)).ReverseMap();
 
             //________________________________________________________/Record
 
             CreateMap<RecordDtos, Record>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+     
          .ForMember(dest => dest.AudioFile, opt => opt.MapFrom(src => src.AudioFile))
          .ForMember(dest => dest.DatePosted, opt => opt.MapFrom(src => src.DatePosted))
          .ForMember(dest => dest.BookId, opt => opt.MapFrom(src => src.bookId)) 
@@ -67,7 +72,7 @@ namespace Rawy.Helpers
             //________________________________________________________/Review
 
             CreateMap<Review, ReviewDto>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+ 
                           .ForMember(b => b.Comment, db => db.MapFrom(a => a.Comment))
                           .ForMember(b => b.Rating, db => db.MapFrom(a => a.Rating))
                           .ForMember(b => b.BookId, db => db.MapFrom(a => a.BookId))
@@ -83,11 +88,19 @@ namespace Rawy.Helpers
 
             //________________________________________________________/Aurthor
             CreateMap<Aurthor, AuthorDtos>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+                
                      .ForMember(b => b.Name, db => db.MapFrom(a => a.Name))
                     
                      .ForMember(b => b.Descriotion, db => db.MapFrom(a => a.Descriotion))
                      .ForMember(b => b.ProfilePicture, db => db.MapFrom(a => a.ProfilePicture)).ReverseMap();
+            CreateMap<Aurthor, authoridDtos>()
+
+              .ForMember(b => b.Name, db => db.MapFrom(a => a.Name))
+
+              .ForMember(b => b.Descriotion, db => db.MapFrom(a => a.Descriotion))
+              .ForMember(b => b.ProfilePicture, db => db.MapFrom(a => a.ProfilePicture))
+              .ForMember(b => b.Books, db => db.MapFrom(a => a.Books))
+              .ReverseMap();
             ;
             //________________________________________________________/Favorite
 
@@ -106,7 +119,7 @@ namespace Rawy.Helpers
 
 
             CreateMap<Prodcast,ProdcastDto>()
-                    .ForMember(b => b.Id, db => db.MapFrom(a => a.Id))
+   
               .ForMember(b => b.Prodcastname, O => O.MapFrom(a => a.Prodcastname))
               .ForMember(b => b.Prodcastimage, O => O.MapFrom(a => a.Prodcastimage))
               .ForMember(b => b.episodeDtos, O => O.MapFrom(a => a.episode))
