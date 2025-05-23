@@ -6,6 +6,7 @@ namespace Rawy.Dtos.Review
 {
     public class ReviewDto : BaseDto
     {
+        public int Id { get; set; }
         public string UserId { get; set; }
         
         public string UserDisplayName { get; set; }
@@ -27,6 +28,7 @@ namespace Rawy.Dtos.Review
 
     public class CreateReviewDto
     {
+        public int Id { get; set; }
         [Required]
         public int? BookId { get; set; }
         
@@ -45,6 +47,7 @@ namespace Rawy.Dtos.Review
 
     public class UpdateReviewDto
     {
+        public int Id { get; set; }
         [Range(1, 5)]
         public int? Rating { get; set; }
 

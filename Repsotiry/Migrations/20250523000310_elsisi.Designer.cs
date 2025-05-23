@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repsotiry.Data;
 
@@ -11,9 +12,10 @@ using Repsotiry.Data;
 namespace Repsotiry.Migrations
 {
     [DbContext(typeof(RawyDbcontext))]
-    partial class RawyDbcontextModelSnapshot : ModelSnapshot
+    [Migration("20250523000310_elsisi")]
+    partial class elsisi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

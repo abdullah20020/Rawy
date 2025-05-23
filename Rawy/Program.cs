@@ -103,22 +103,18 @@ namespace Rawy
             builder.Services.AddScoped(typeof(IGenaricReposteryUSers<>), typeof(GenaricRepostryusers<>));
             builder.Services.AddSignalR();
             builder.Services.AddScoped<INotificationService, NotificationService>();
-
-
-
-            //builder.Services.AddScoped<CsvGeneratorService>();
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowFrontend", policy =>
-                {
-                    policy.WithOrigins("http://localhost:3000")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-          
-                });
-            });
-
-
+        
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", builder =>
+    {
+        builder.WithOrigins("http://localhost:5173")
+               .AllowCredentials()  // مهم للسماح بإرسال الكوكيز أو أي credentials
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+});
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
@@ -128,7 +124,7 @@ namespace Rawy
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 await AppDbInitializer.SeedAdminAsync(userManager, roleManager);
             }
-            app.UseCors("AllowFrontend");
+         
 
 
 
@@ -160,13 +156,13 @@ namespace Rawy
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
-
-
+            //app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseCors("AllowSpecificOrigin");
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseStaticFiles();
-
+  
             app.MapControllers();
             app.MapHub<NotificationHub>("/hubs/notifications");
             app.Run();

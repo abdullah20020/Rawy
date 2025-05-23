@@ -9,7 +9,7 @@ namespace core.Prametars
     public class Bookspecpram
     {
         private const int Maxmum = 10;
-        private int pageSize = 5;
+        private int pageSize = 15;
         public int PageIndex { get; set; } = 1;
         public int pagesize
         { 

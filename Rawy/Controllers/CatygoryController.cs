@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Rawy.Dtos;
 using Rawy.Dtos.catygoryDtos;
+using Repsotiry.spacification;
 
 namespace Rawy.Controllers
 {
@@ -31,10 +32,23 @@ namespace Rawy.Controllers
 
         }
 
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<CatygorybyidDtos>> GetCatygoryById(int id)
+        //{
+        //    var category = await catygoryrepo.GetByIdAsync(id);
+
+        //    if (category == null)
+        //        return NotFound($"Catygory with id {id} not found.");
+
+        //    var dto = mapper.Map<CatygorybyidDtos>(category);
+
+        //    return Ok(dto);
+        //}
         [HttpGet("{id}")]
         public async Task<ActionResult<CatygorybyidDtos>> GetCatygoryById(int id)
         {
-            var category = await catygoryrepo.GetByIdAsync(id);
+            var spec = new CatygorySpec(id);
+            var category = await catygoryrepo.getbyidwithspacAsync(spec);
 
             if (category == null)
                 return NotFound($"Catygory with id {id} not found.");
@@ -43,6 +57,7 @@ namespace Rawy.Controllers
 
             return Ok(dto);
         }
+
 
         [HttpPost("add")]
         public async Task<ActionResult<CatygoryDtos>> AddCatygory([FromBody] AddCatygoryDto dto)
