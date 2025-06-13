@@ -1,0 +1,292 @@
+﻿using AutoMapper;
+using core.Models;
+using core.Prametars;
+using core.Repository;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Rawy.Dtos;
+using Repsotiry.Data;
+using Repsotiry.GenaricReposiory;
+using Repsotiry.Migrations;
+using Repsotiry.spacification;
+using Services;
+using System.Security.Claims;
+using static System.Reflection.Metadata.BlobBuilder;
+
+namespace Rawy.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class bookController : ControllerBase
+    {
+        private readonly IGenaricrepostry<Book> genaricrepostry;
+        private readonly IHubContext<NotificationHub> hubContext;
+        private readonly IMapper mapper;
+
+        private readonly IGenaricrepostry<Record> genaricrepostryrecords;
+        private readonly RawyDbcontext rawyDbcontext;
+        private readonly IMemoryCache memoryCache;
+        private readonly IGenaricrepostry<Notification> genaricrepostrynotification;
+
+        public bookController(IGenaricrepostry<Book> genaricrepostry, IHubContext<NotificationHub> hubContext, IMapper mapper, IGenaricrepostry<Record> genaricrepostryrecords, RawyDbcontext rawyDbcontext, IMemoryCache memoryCache,IGenaricrepostry<Notification>genaricrepostrynotification)
+        {
+            this.genaricrepostry = genaricrepostry;
+            this.hubContext = hubContext;
+            this.mapper = mapper;
+            this.genaricrepostryrecords = genaricrepostryrecords;
+            this.rawyDbcontext = rawyDbcontext;
+            this.memoryCache = memoryCache;
+            this.genaricrepostrynotification = genaricrepostrynotification;
+        }
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable
+        //<Book>>> getall()
+        //{
+        //    var books = await genaricrepostry.getallAsync();
+        //    return Ok(books);
+[HttpPost("create")]
+public async Task<IActionResult> CreateBookWithAuthorName([FromForm] bookWithAuthorCategoryDto dto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+
+    // Check author
+    var existingAuthor = await rawyDbcontext.Authors
+        .FirstOrDefaultAsync(a => a.Name == dto.AuthorName);
+
+    if (existingAuthor == null)
+    {
+        existingAuthor = new Aurthor { Name = dto.AuthorName };
+        await rawyDbcontext.Authors.AddAsync(existingAuthor);
+        await rawyDbcontext.SaveChangesAsync();
+    }
+
+    // Handle photo
+    string? uniqueFileName = null;
+    if (dto.CoverPhoto != null)
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
+
+        uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.CoverPhoto.FileName;
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await dto.CoverPhoto.CopyToAsync(fileStream);
+        }
+    }
+
+    // Create book
+    var book = new Book
+    {
+        BookTitle = dto.BookTitle,
+        AurthorId = existingAuthor.Id,
+        CoverImage = "images/" + uniqueFileName,
+        Language = string.IsNullOrWhiteSpace(dto.Language) ? "Unknown" : dto.Language,
+        ReleaseDate = dto.ReleaseDate,
+        catygories = new List<Catygory>()
+    };
+
+    // Link categories properly without creating new categories
+    foreach (var categoryId in dto.CategoryIds)
+    {
+        var existingCategory = await rawyDbcontext.Categories.FindAsync(categoryId);
+        if (existingCategory != null)
+        {
+            book.catygories.Add(existingCategory);
+        }
+        else
+        {
+            return BadRequest($"Category with Id {categoryId} does not exist.");
+        }
+    }
+
+    await rawyDbcontext.Books.AddAsync(book);
+    await rawyDbcontext.SaveChangesAsync();
+
+    var users = await rawyDbcontext.Users.ToListAsync(); 
+    foreach (var user in users)
+    {
+        var notification = new Notification
+        {
+            Message = $"book is added{book.BookTitle}",
+            UserId = user.Id
+        };
+        await genaricrepostrynotification.set(notification);
+    }
+
+    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"book is added: {book.BookTitle}");
+
+    return Ok("Book created successfully.");
+}
+
+        [HttpGet("get for admin")]
+  
+        public async Task<ActionResult<IReadOnlyList<bookAdmindtos>>> getallwithspac([FromQuery] Bookspecpram bookspecpram)
+        {
+            var spac = new bookspacefcation(bookspecpram);
+
+            var books = await genaricrepostry.getallwithspacAsync(spac);
+            var mappeing = mapper.Map<IReadOnlyList<Book>, IReadOnlyList<bookAdmindtos>>(books);
+
+            foreach (var book in mappeing)
+            {
+                book.RecordDtos = book.RecordDtos?.Where(r => r.IsRecording == false).ToList();
+            }
+
+            return Ok(mappeing);
+
+        }
+        [HttpGet]
+        public async Task<ActionResult<IReadOnlyList<bookdtos>>> getallwithspacforAdmin ([FromQuery] Bookspecpram bookspecpram)
+        {
+            var spac = new bookspacefcation(bookspecpram);
+
+            var books = await genaricrepostry.getallwithspacAsync(spac);
+            var mappeing = mapper.Map<IReadOnlyList<Book>, IReadOnlyList<bookdtos>>(books);
+
+            foreach (var book in mappeing)
+            {
+                book.RecordDtos = book.RecordDtos?.Where(r => r.IsRecording).ToList();
+            }
+
+            return Ok(mappeing);
+
+        }
+
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<ActionResult<bookdtos>> getbyidwithspac(int id)
+        {
+            var spac = new bookspacefcation(id);
+            var book = await genaricrepostry.getbyidwithspacAsync(spac);
+            if (book == null) return NotFound();
+
+            var mappeing = mapper.Map<Book, bookdtos>(book);
+
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            { 
+                var exists = await rawyDbcontext.UserInterests
+                    .AnyAsync(ui => ui.UserId == userId && ui.BookId == book.Id);
+
+                if (!exists)
+                {
+                    var interest = new UserInterestbook
+                    {
+                        UserId = userId,
+                        BookId = book.Id
+                    };
+                    rawyDbcontext.UserInterests.Add(interest);
+                    await rawyDbcontext.SaveChangesAsync();
+                }
+            }
+
+            return Ok(mappeing);
+        }
+
+        //[HttpPost]
+        //public async Task<ActionResult<bookdtos>> CreateBook([FromBody] bookdtos bookDto)
+        //{
+        //    var bookEntity = mapper.Map<Book>(bookDto);
+        //    await genaricrepostry.set(bookEntity);
+        //    var users = await rawyDbcontext.Users.ToListAsync();
+
+
+        //    foreach (var user in users)
+        //    {
+        //        var notification = new Notification
+        //        {
+        //            Message = $"we add new book: {bookDto.BookTitle}",
+        //            UserId = user.Id
+        //        };
+        //        await genaricrepostrynotification.set(notification);
+        //    }
+
+        //    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"new book,We added : {bookDto.BookTitle}");
+        //    return CreatedAtAction(nameof(getbyidwithspac), new { id = bookEntity.Id }, mapper.Map<bookdtos>(bookEntity));
+        //}
+
+        //[HttpPut("{id}")]
+        //public async Task<ActionResult> UpdateBook(int id, [FromBody] bookdtos bookDto)
+        //{
+        //    var existingBook = await genaricrepostry.GetByIdAsync(id);
+        //    if (existingBook == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    var users = await rawyDbcontext.Users.ToListAsync();
+
+
+        //    foreach (var user in users)
+        //    {
+        //        var notification = new Notification
+        //        {
+        //            Message = $"we updated: {bookDto.BookTitle}",
+        //            UserId = user.Id
+        //        };
+        //        await genaricrepostrynotification.set(notification);
+        //    }
+        //    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"we updated : {bookDto.BookTitle}");
+
+        //    var updatedBook = mapper.Map(bookDto, existingBook);
+        //    await genaricrepostry.UpdateAsync(updatedBook);
+        //    return NoContent();
+        //}
+
+
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteBook(int id)
+        {
+            var book = await genaricrepostry.GetByIdAsync(id);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+
+            await genaricrepostry.DeleteAsync(book);
+            return NoContent();
+        }
+        [HttpGet("recommendation")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<bookdtos>>> GetUserRecommendedBooks()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID is missing or invalid in the token.");
+            }
+
+
+            if (!memoryCache.TryGetValue(userId, out List<int> recommendedBookIds))
+            {
+                return NotFound("No recommendations found. Please login again.");
+            }
+
+            var books = new List<bookdtos>();
+
+
+            foreach (int id in recommendedBookIds)
+            {
+                var spec = new bookspacefcation(id);
+                var book = await genaricrepostry.getbyidwithspacAsync(spec);
+                if (book != null)
+                {
+                    books.Add(mapper.Map<Book, bookdtos>(book));
+                }
+            }
+
+            return Ok(books);
+        }
+    }
+}
