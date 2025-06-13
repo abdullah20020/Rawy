@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Rawy.Dtos;
+using Rawy.Dtos.favoriteDtos;
 using Repsotiry.Data;
 using System.Security.Claims;
 using System.Text.Json;
@@ -99,34 +100,26 @@ namespace Rawy.Controllers
         [HttpGet("Email_exists")]
         public async Task<ActionResult<bool>> CheckEmailExists(string email)
     => await _userManager.FindByEmailAsync(email) is not null;
-
         [HttpGet("{id}")]
-        //[Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserDto>> GetUserById(string id)
+        public async Task<ActionResult<showuserdto>> GetUserById(string id)
         {
             var user = await rawyDbcontext.Set<BaseUser>()
                 .Include(u => u.Reviews)
                 .Include(u => u.Favorites)
+                    .ThenInclude(f => f.Books)
                 .Include(u => u.Records)
+                .Include(u => u.Prodcast)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
                 return NotFound("User not found");
 
-            return Ok(new showuserdto
-            {
-          
-                email = user.Email,
-                records = user.Records,
-                DisplayName = user.UserName,
-                ProfilePicture = user.ProfilePicture,
-                DateJoined = user.DateJoined,
-                Cv_Url = user.Cv_Url,
-                ReviewsCount = user.Reviews?.Count ?? 0,
-                favoriteCount = user.Favorites?.Count ?? 0
-            });
+            var result = _mapper.Map<showuserdto>(user);
+
+            return Ok(result);
         }
         [HttpPost("upload-profile-picture")]
+        [Authorize]
         public async Task<IActionResult> UploadProfilePicture([FromForm] ProfilePictureDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -138,11 +131,9 @@ namespace Rawy.Controllers
             if (dto.ProfilePicture == null || dto.ProfilePicture.Length == 0)
                 return BadRequest("No file uploaded");
 
-         
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ProfilePicture.FileName)}";
             var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "profilepics", fileName);
 
-        
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
             using (var stream = new FileStream(path, FileMode.Create))
@@ -150,12 +141,12 @@ namespace Rawy.Controllers
                 await dto.ProfilePicture.CopyToAsync(stream);
             }
 
-         
             user.ProfilePicture = $"/profilepics/{fileName}";
             await _userManager.UpdateAsync(user);
 
             return Ok(new { imageUrl = user.ProfilePicture });
         }
+
         [HttpGet]
         [Authorize] 
         public async Task<ActionResult<UserAccountDto>> UserAccount()

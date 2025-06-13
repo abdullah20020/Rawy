@@ -10,9 +10,7 @@ namespace core.Models
 {
     public class Favorite:BaseClass
     {
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; }
+
 
        
         public string BaseUserId { get; set; }

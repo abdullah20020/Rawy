@@ -18,14 +18,13 @@ namespace Rawy.Dtos
         [Required]
         public string Prodcastname { get; set; }
 
-        public string? Prodcastimage { get; set; }
+        public IFormFile? Prodcastimage { get; set; } 
 
         [Required]
         public string BaseUserId { get; set; }
 
-        public DateTime? ReleaseDate { get; set; }
+        public DateTime? ReleaseDate { get; set; } = DateTime.Now;
 
-        public List<int>? EpisodeIds { get; set; }
     }
 
 }

@@ -44,6 +44,7 @@ namespace Rawy.Controllers
 
         //    return Ok(dto);
         //}
+        
         [HttpGet("{id}")]
         public async Task<ActionResult<CatygorybyidDtos>> GetCatygoryById(int id)
         {

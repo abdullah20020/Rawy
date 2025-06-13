@@ -25,6 +25,8 @@ namespace Repsotiry.spacification
         {
             includes.Add(PL => PL.reviews);
             includes.Add(PL => PL.episode);
+            AddThenInclude(q => q.Include(f => f.episode).ThenInclude(b => b.record));
+            includes.Add(PL => PL.User);
        
 
         }

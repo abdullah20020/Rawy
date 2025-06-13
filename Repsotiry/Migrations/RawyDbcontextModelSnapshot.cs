@@ -106,6 +106,9 @@ namespace Repsotiry.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int>("FavoriteId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -183,7 +186,6 @@ namespace Repsotiry.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("bookurl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -221,7 +223,7 @@ namespace Repsotiry.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ProdcastId")
+                    b.Property<int>("ProdcastId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -232,7 +234,7 @@ namespace Repsotiry.Migrations
 
                     b.HasIndex("ProdcastId");
 
-                    b.ToTable("episode");
+                    b.ToTable("episodes");
                 });
 
             modelBuilder.Entity("core.Models.Favorite", b =>
@@ -247,14 +249,10 @@ namespace Repsotiry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("BaseUserId");
+                    b.HasIndex("BaseUserId")
+                        .IsUnique();
 
                     b.ToTable("Favorites");
                 });
@@ -412,9 +410,6 @@ namespace Repsotiry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("episodeId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
@@ -422,8 +417,6 @@ namespace Repsotiry.Migrations
                     b.HasIndex("ProdcastId");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("episodeId");
 
                     b.ToTable("Reviews");
                 });
@@ -646,16 +639,20 @@ namespace Repsotiry.Migrations
 
             modelBuilder.Entity("core.Models.episode", b =>
                 {
-                    b.HasOne("core.Models.Prodcast", null)
+                    b.HasOne("core.Models.Prodcast", "Prodcast")
                         .WithMany("episode")
-                        .HasForeignKey("ProdcastId");
+                        .HasForeignKey("ProdcastId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prodcast");
                 });
 
             modelBuilder.Entity("core.Models.Favorite", b =>
                 {
                     b.HasOne("core.Models.BaseUser", "User")
-                        .WithMany("Favorites")
-                        .HasForeignKey("BaseUserId")
+                        .WithOne("Favorites")
+                        .HasForeignKey("core.Models.Favorite", "BaseUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -735,13 +732,7 @@ namespace Repsotiry.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("core.Models.episode", "Episode")
-                        .WithMany("reviews")
-                        .HasForeignKey("episodeId");
-
                     b.Navigation("Books");
-
-                    b.Navigation("Episode");
 
                     b.Navigation("Prodcast");
 
@@ -840,7 +831,8 @@ namespace Repsotiry.Migrations
 
             modelBuilder.Entity("core.Models.BaseUser", b =>
                 {
-                    b.Navigation("Favorites");
+                    b.Navigation("Favorites")
+                        .IsRequired();
 
                     b.Navigation("Playlists");
 
@@ -862,8 +854,6 @@ namespace Repsotiry.Migrations
                 {
                     b.Navigation("record")
                         .IsRequired();
-
-                    b.Navigation("reviews");
                 });
 
             modelBuilder.Entity("core.Models.Prodcast", b =>

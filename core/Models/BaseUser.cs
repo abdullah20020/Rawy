@@ -17,7 +17,9 @@ namespace core.Models
         public ICollection<Record>? Records { get; set; } = new HashSet<Record>();
         public ICollection<Playlist>? Playlists { get; set; } = new HashSet<Playlist>();
         public ICollection<Review>? Reviews { get; set; } = new HashSet<Review>();
-        public ICollection<Favorite>? Favorites { get; set; } = new List<Favorite>();
+
+        public int FavoriteId { get; set; }
+        public Favorite Favorites { get; set; }
         public ICollection <Prodcast>? Prodcast { get; set; }
 
     }

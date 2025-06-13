@@ -10,7 +10,7 @@ namespace core.Models
 {
     public class Book:BaseClass
     {
-
+       
   
         [MaxLength(200)]
         public string BookTitle { get; set; }
@@ -18,7 +18,7 @@ namespace core.Models
         public string CoverImage { get; set; }
 
 
-        public string bookurl { get; set; }
+        public string? bookurl { get; set; }
   
    
         public string Language { get; set; }

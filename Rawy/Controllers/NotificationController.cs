@@ -50,7 +50,7 @@ namespace Rawy.Controllers
             return Ok(notifications);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteNotification(int id)
         {

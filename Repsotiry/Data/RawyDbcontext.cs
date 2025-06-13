@@ -46,8 +46,8 @@ namespace Repsotiry.Data
 
             modelBuilder.Entity<Favorite>()
                 .HasOne(f => f.User)
-                .WithMany(u => u.Favorites)
-                .HasForeignKey(f => f.BaseUserId)
+                .WithOne(u => u.Favorites)
+                //.HasForeignKey(f => f.BaseUserId)
                 .OnDelete(DeleteBehavior.Restrict);
             // إعداد العلاقة بين Favorite و ApplicationUser
           
@@ -67,6 +67,7 @@ namespace Repsotiry.Data
         public DbSet<BaseUser> users { get; set; }
       public DbSet<UserInterestbook> UserInterests { get; set; }
       public DbSet<Prodcast> prodcasts { get; set; }
+      public DbSet<episode>episodes { get; set; }
 
         public DbSet<Notification> Notifications { get; set; }
 

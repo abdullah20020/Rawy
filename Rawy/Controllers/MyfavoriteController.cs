@@ -5,6 +5,7 @@ using core.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Rawy.Dtos;
 using Rawy.Dtos.favoriteDtos;
 using Repsotiry.Data;
@@ -20,18 +21,24 @@ namespace Rawy.Controllers
     
     public class MyfavoriteController : ControllerBase
     {
-        private IMapper mapper;
-        private IGenaricrepostry<Favorite> genaricrepostry;
-        private IGenaricrepostry<Book> genaricrepostryb;
+        private readonly IMapper mapper;
+        private readonly IGenaricrepostry<Favorite> genaricrepostry;
+        private readonly IGenaricrepostry<Book> genaricrepostryb;
+        private readonly RawyDbcontext _dbContext;
 
-        public MyfavoriteController(IMapper mapper, IGenaricrepostry<Favorite> genaricrepostry,IGenaricrepostry<Book> genaricrepostryb)
+        public MyfavoriteController(
+            IMapper mapper,
+            IGenaricrepostry<Favorite> genaricrepostry,
+            IGenaricrepostry<Book> genaricrepostryb,
+            RawyDbcontext _dbcontext)
         {
-            this.genaricrepostryb = genaricrepostryb;
             this.mapper = mapper;
-            this.genaricrepostry = genaricrepostry; 
-
+            this.genaricrepostry = genaricrepostry;
+            this.genaricrepostryb = genaricrepostryb;
+            this._dbContext = _dbcontext;
         }
-        
+
+
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<FavoriteDtos>>> GetallFavorites()
         {
@@ -52,70 +59,45 @@ namespace Rawy.Controllers
 
             return Ok(mappeing);
         }
-        
-        [HttpPost]
-        public async Task<ActionResult<FavoriteDtos>> AddFavorite([FromBody] AddFavoriteDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
 
+        [HttpPost("add")]
+        public async Task<IActionResult> AddBookToFavorites([FromBody] UpdateFavoriteDto dto)
+        {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized();
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User is not authenticated.");
-            }
-
-            var favorite = mapper.Map<AddFavoriteDto, Favorite>(dto);
-
-            favorite.BaseUserId = userId; 
-
-            var books = await genaricrepostryb.GetBooksByIdsAsync(dto.BookIds);
-
-            favorite.Books = books.ToList();
-
-            var result = await genaricrepostry.set(favorite);
-
-            var mapped = mapper.Map<Favorite, FavoriteDtos>(result);
-
-            return Ok(mapped);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<FavoriteDtos>> UpdateFavorite(int id, [FromBody] UpdateFavoriteDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var favspac = new MyFavoriteSpacification(id);
-            var favorite = await genaricrepostry.getbyidwithspacAsync(favspac);
+            var favorite = await _dbContext.Favorites
+                .Include(f => f.Books)
+                .FirstOrDefaultAsync(f => f.BaseUserId == userId);
 
             if (favorite == null)
-                return NotFound("Favorite not found");
-
-            if (!string.IsNullOrEmpty(dto.Name))
-                favorite.Name = dto.Name;
-
-            if (!string.IsNullOrEmpty(dto.BaseUserId))
-                favorite.BaseUserId = dto.BaseUserId;
-
-            if (dto.BookIds != null && dto.BookIds.Any())
             {
-                favorite.Books.Clear();
-                var books = await genaricrepostryb.GetBooksByIdsAsync(dto.BookIds);
-                foreach (var book in books)
+                favorite = new Favorite
                 {
-                    favorite.Books.Add(book);
-                }
+                    BaseUserId = userId,
+                    Books = new List<Book>()
+                };
+                _dbContext.Favorites.Add(favorite);
             }
 
-            var updatedFavorite = await genaricrepostry.UpdateAsync(favorite);
+            var book = await _dbContext.Books.FindAsync(dto.BookId);
+            if (book == null)
+                return NotFound("Book not found");
 
-            var mapped = mapper.Map<Favorite, FavoriteDtos>(updatedFavorite);
+            if (favorite.Books.Any(b => b.Id == book.Id))
+            {
+                return BadRequest("Book is already in favorites.");
+            }
+            else
+            {
+                favorite.Books.Add(book);
+            }
 
-            return Ok(mapped);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Book added to favorites." });
         }
-
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteFavorite(int id)
         {

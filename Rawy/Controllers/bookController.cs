@@ -48,11 +48,102 @@ namespace Rawy.Controllers
         //{
         //    var books = await genaricrepostry.getallAsync();
         //    return Ok(books);
+[HttpPost("create")]
+public async Task<IActionResult> CreateBookWithAuthorName([FromForm] bookWithAuthorCategoryDto dto)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
 
-        //}
+    // Check author
+    var existingAuthor = await rawyDbcontext.Authors
+        .FirstOrDefaultAsync(a => a.Name == dto.AuthorName);
 
+    if (existingAuthor == null)
+    {
+        existingAuthor = new Aurthor { Name = dto.AuthorName };
+        await rawyDbcontext.Authors.AddAsync(existingAuthor);
+        await rawyDbcontext.SaveChangesAsync();
+    }
+
+    // Handle photo
+    string? uniqueFileName = null;
+    if (dto.CoverPhoto != null)
+    {
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
+
+        uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.CoverPhoto.FileName;
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await dto.CoverPhoto.CopyToAsync(fileStream);
+        }
+    }
+
+    // Create book
+    var book = new Book
+    {
+        BookTitle = dto.BookTitle,
+        AurthorId = existingAuthor.Id,
+        CoverImage = "images/" + uniqueFileName,
+        Language = string.IsNullOrWhiteSpace(dto.Language) ? "Unknown" : dto.Language,
+        ReleaseDate = dto.ReleaseDate,
+        catygories = new List<Catygory>()
+    };
+
+    // Link categories properly without creating new categories
+    foreach (var categoryId in dto.CategoryIds)
+    {
+        var existingCategory = await rawyDbcontext.Categories.FindAsync(categoryId);
+        if (existingCategory != null)
+        {
+            book.catygories.Add(existingCategory);
+        }
+        else
+        {
+            return BadRequest($"Category with Id {categoryId} does not exist.");
+        }
+    }
+
+    await rawyDbcontext.Books.AddAsync(book);
+    await rawyDbcontext.SaveChangesAsync();
+
+    var users = await rawyDbcontext.Users.ToListAsync(); 
+    foreach (var user in users)
+    {
+        var notification = new Notification
+        {
+            Message = $"book is added{book.BookTitle}",
+            UserId = user.Id
+        };
+        await genaricrepostrynotification.set(notification);
+    }
+
+    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"book is added: {book.BookTitle}");
+
+    return Ok("Book created successfully.");
+}
+
+        [HttpGet("get for admin")]
+  
+        public async Task<ActionResult<IReadOnlyList<bookAdmindtos>>> getallwithspac([FromQuery] Bookspecpram bookspecpram)
+        {
+            var spac = new bookspacefcation(bookspecpram);
+
+            var books = await genaricrepostry.getallwithspacAsync(spac);
+            var mappeing = mapper.Map<IReadOnlyList<Book>, IReadOnlyList<bookAdmindtos>>(books);
+
+            foreach (var book in mappeing)
+            {
+                book.RecordDtos = book.RecordDtos?.Where(r => r.IsRecording == false).ToList();
+            }
+
+            return Ok(mappeing);
+
+        }
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<bookdtos>>> getallwithspac([FromQuery] Bookspecpram bookspecpram)
+        public async Task<ActionResult<IReadOnlyList<bookdtos>>> getallwithspacforAdmin ([FromQuery] Bookspecpram bookspecpram)
         {
             var spac = new bookspacefcation(bookspecpram);
 
@@ -68,7 +159,9 @@ namespace Rawy.Controllers
 
         }
 
+
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<bookdtos>> getbyidwithspac(int id)
         {
             var spac = new bookspacefcation(id);
@@ -99,55 +192,55 @@ namespace Rawy.Controllers
             return Ok(mappeing);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<bookdtos>> CreateBook([FromBody] bookdtos bookDto)
-        {
-            var bookEntity = mapper.Map<Book>(bookDto);
-            await genaricrepostry.set(bookEntity);
-            var users = await rawyDbcontext.Users.ToListAsync();
-
-  
-            foreach (var user in users)
-            {
-                var notification = new Notification
-                {
-                    Message = $"we add new book: {bookDto.BookTitle}",
-                    UserId = user.Id
-                };
-                await genaricrepostrynotification.set(notification);
-            }
-
-            await hubContext.Clients.All.SendAsync("ReceiveNotification", $"new book,We added : {bookDto.BookTitle}");
-            return CreatedAtAction(nameof(getbyidwithspac), new { id = bookEntity.Id }, mapper.Map<bookdtos>(bookEntity));
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateBook(int id, [FromBody] bookdtos bookDto)
-        {
-            var existingBook = await genaricrepostry.GetByIdAsync(id);
-            if (existingBook == null)
-            {
-                return NotFound();
-            }
-            var users = await rawyDbcontext.Users.ToListAsync();
+        //[HttpPost]
+        //public async Task<ActionResult<bookdtos>> CreateBook([FromBody] bookdtos bookDto)
+        //{
+        //    var bookEntity = mapper.Map<Book>(bookDto);
+        //    await genaricrepostry.set(bookEntity);
+        //    var users = await rawyDbcontext.Users.ToListAsync();
 
 
-            foreach (var user in users)
-            {
-                var notification = new Notification
-                {
-                    Message = $"we updated: {bookDto.BookTitle}",
-                    UserId = user.Id
-                };
-                await genaricrepostrynotification.set(notification);
-            }
-            await hubContext.Clients.All.SendAsync("ReceiveNotification", $"we updated : {bookDto.BookTitle}");
+        //    foreach (var user in users)
+        //    {
+        //        var notification = new Notification
+        //        {
+        //            Message = $"we add new book: {bookDto.BookTitle}",
+        //            UserId = user.Id
+        //        };
+        //        await genaricrepostrynotification.set(notification);
+        //    }
 
-            var updatedBook = mapper.Map(bookDto, existingBook);
-            await genaricrepostry.UpdateAsync(updatedBook);
-            return NoContent();
-        }
-     
+        //    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"new book,We added : {bookDto.BookTitle}");
+        //    return CreatedAtAction(nameof(getbyidwithspac), new { id = bookEntity.Id }, mapper.Map<bookdtos>(bookEntity));
+        //}
+
+        //[HttpPut("{id}")]
+        //public async Task<ActionResult> UpdateBook(int id, [FromBody] bookdtos bookDto)
+        //{
+        //    var existingBook = await genaricrepostry.GetByIdAsync(id);
+        //    if (existingBook == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    var users = await rawyDbcontext.Users.ToListAsync();
+
+
+        //    foreach (var user in users)
+        //    {
+        //        var notification = new Notification
+        //        {
+        //            Message = $"we updated: {bookDto.BookTitle}",
+        //            UserId = user.Id
+        //        };
+        //        await genaricrepostrynotification.set(notification);
+        //    }
+        //    await hubContext.Clients.All.SendAsync("ReceiveNotification", $"we updated : {bookDto.BookTitle}");
+
+        //    var updatedBook = mapper.Map(bookDto, existingBook);
+        //    await genaricrepostry.UpdateAsync(updatedBook);
+        //    return NoContent();
+        //}
+
 
 
         [HttpDelete("{id}")]
@@ -174,7 +267,7 @@ namespace Rawy.Controllers
                 return Unauthorized("User ID is missing or invalid in the token.");
             }
 
-  
+
             if (!memoryCache.TryGetValue(userId, out List<int> recommendedBookIds))
             {
                 return NotFound("No recommendations found. Please login again.");
@@ -182,7 +275,7 @@ namespace Rawy.Controllers
 
             var books = new List<bookdtos>();
 
-     
+
             foreach (int id in recommendedBookIds)
             {
                 var spec = new bookspacefcation(id);

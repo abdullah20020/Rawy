@@ -13,6 +13,6 @@ namespace Rawy.Dtos
         public ICollection<Record>? Records { get; set; } 
         public ICollection<Playlist>? Playlists { get; set; }
         public ICollection<core.Models.Review>? Reviews { get; set; } 
-        public ICollection<Favorite>? Favorites { get; set; }
+        public Favorite Favorites { get; set; }
     }
 }

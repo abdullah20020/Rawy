@@ -22,4 +22,11 @@
     <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\profilepics\" />
+    <Folder Include="wwwroot\Podcast_Images\" />
+    <Folder Include="wwwroot\uploads\" />
+    <Folder Include="wwwroot\uploads\audios\" />
+  </ItemGroup>
+
 </Project>

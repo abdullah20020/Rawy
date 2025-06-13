@@ -11,8 +11,11 @@ namespace core.Models
 
         public DateTime Date { get; set; } = DateTime.UtcNow;
         public string Title { get; set; }
+
+        public int ProdcastId { get; set; }
+        public Prodcast Prodcast { get; set; }
         public Record record { get; set; }
-        public ICollection<Review> reviews { get; set; } = new HashSet<Review>();
+ 
 
     }
 }

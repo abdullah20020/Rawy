@@ -10,6 +10,19 @@ namespace Rawy.Dtos
         public int Id { get; set; }
         public DateTime Date { get; set; } = DateTime.UtcNow;
         public string Title { get; set; }
-        public Record record { get; set; }
+        public RecordDtos record { get; set; }
     }
+    public class episodeRecordDtos
+    {
+        public IFormFile AudioFile { get; set; }
+    }
+
+    public class uploadEpisodeDto
+    {
+
+        public string Title { get; set; }
+        public int ProdcastId { get; set; } 
+        public episodeRecordDtos record { get; set; }
+    }
+
 }

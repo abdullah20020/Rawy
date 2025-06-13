@@ -22,7 +22,7 @@ namespace Repsotiry.spacification
 
         private void AddIncludes()
         {
-            includes.Add(PL => PL.reviews);
+
             includes.Add(PL => PL.record);
 
 

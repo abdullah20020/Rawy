@@ -69,7 +69,10 @@ namespace Rawy
         public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 209715200; // 200MB
+            });
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -104,13 +107,13 @@ namespace Rawy
             builder.Services.AddSignalR();
             builder.Services.AddScoped<INotificationService, NotificationService>();
         
-// Add CORS
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     {
         builder.WithOrigins("http://localhost:5173")
-               .AllowCredentials()  // مهم للسماح بإرسال الكوكيز أو أي credentials
+               .AllowCredentials() 
                .AllowAnyHeader()
                .AllowAnyMethod();
     });

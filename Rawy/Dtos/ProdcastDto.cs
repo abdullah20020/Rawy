@@ -9,7 +9,7 @@ namespace Rawy.Dtos
 
         public string? Prodcastimage { get; set; }
 
-        public string? BaseUserId { get; set; }
+        public UserDtoProdcast BaseUser { get; set; }
 
 
         public DateTime? ReleaseDate { get; set; }
