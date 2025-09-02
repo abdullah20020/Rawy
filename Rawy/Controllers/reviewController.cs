@@ -39,10 +39,7 @@ namespace Rawy.Controllers
         public async Task<ActionResult<ReviewDto>> GetReview(int id)
         {
             var review = await _genaricrepostry.GetByIdAsync(id);
-            //if (review == null)
-            //{
-            //    return NotFound();
-            //}
+
 
             var reviewDto = _mapper.Map<Review, ReviewDto>(review);
             return Ok(reviewDto);

@@ -100,7 +100,7 @@ namespace Rawy.Helpers
                           .ForMember(b => b.Rating, db => db.MapFrom(a => a.Rating))
                           .ForMember(b => b.BookId, db => db.MapFrom(a => a.BookId))
                           .ForMember(b => b.UserId, db => db.MapFrom(a => a.UserId))
-           
+ 
                           .ForMember(b => b.ProdcastId, db => db.MapFrom(a => a.ProdcastId))
                           .ForMember(b => b.DatePosted, db => db.MapFrom(a => a.DatePosted)).ReverseMap();
 
